@@ -54,6 +54,16 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 #completeBtn{margin-top:22px;font-family:var(--script);font-size:2.4rem;font-weight:400;padding:8px 44px;background:transparent;color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 26px color-mix(in srgb,var(--accent) 45%,transparent)}
 #completeBtn:hover{background:var(--accent);color:var(--bg)}
 #copyLog{margin:12px auto 0;display:block;padding:4px 16px;background:#ffffff1f;color:var(--ink)}
+@keyframes soft{from{opacity:0;filter:blur(6px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+#title,#sub{animation:soft 1.8s both}
+#sub{animation-delay:.6s}
+#contract,#teamBar,#rounds,#game,#completeBtn,#choices,#copyLog,#closeBtn,#giftSpin,#skip{animation:soft 1.6s both}
+#contract p{animation:soft 1.8s .5s both}
+#contract label,#contract .sig{animation:soft 1.8s 1.8s both}
+#startBtn{animation:soft 1.8s 3s both}
+#result span{animation:soft 1.5s both}
+#result small{animation:soft 1.5s .9s both}
+#history li:first-child{animation:soft 1.5s both}
 /* finale */
 #modal{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 35%,rgba(23,18,35,.97),rgba(0,0,0,.99));display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;animation:fade 1.4s both}
 #modal .card{max-width:720px;width:100%;text-align:center;margin:auto}
@@ -69,7 +79,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 #closeBtn{margin-top:18px}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes reveal{from{opacity:0;filter:blur(12px);transform:translateY(16px) scale(.96)}to{opacity:1;filter:none;transform:none}}
-@media(prefers-reduced-motion:reduce){#modal,#mTitle,#mSub,.entry,#giftBox,#giftResult{animation-duration:.01s;animation-delay:0s}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important}}
 </style>
 </head>
 <body>
@@ -80,7 +90,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 <div id="contract">
 <p id="contractText"></p>
 <label for="team">Sign here to begin.</label>
-<input id="team" class="sig" type="text" maxlength="40" placeholder="The Unfortunate" autocomplete="off" aria-label=" ">
+<input id="team" class="sig" type="text" maxlength="40" placeholder="The Unfortunate" autocomplete="off" aria-label="Sign with your team name">
 <button id="startBtn">Sign the Contract.</button>
 </div>
 
@@ -151,7 +161,7 @@ palette:["#4a1220","#2a0f1e","#5a1e2c","#1f1a33","#3d1420","#33121c","#2b1d3a","
 options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],
 choices:["100 KC","150 KC","Purple","25m Uniques","2 GM CAs"],
 gifts:["Australian Worlds","No Megas","Free reroll","Mirror Image"],
-images:{["GWD":https://oldschool.runescape.wiki/images/thumb/General_Graardor.png/280px-General_Graardor.png?4dd90]},
+images:{"GWD":"https://oldschool.runescape.wiki/images/thumb/General_Graardor.png/280px-General_Graardor.png?4dd90"},
 noRepeats:true,
 endEarly:false,
 maxSpins:5
@@ -201,7 +211,7 @@ var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function textOn(hex){var n=parseInt(hex.slice(1),16),R=n>>16,G=(n>>8)&255,B=n&255;return (0.299*R+0.587*G+0.114*B)>150?"#1d2a44":"#ffffff";}
 function theme(o){var st=document.documentElement.style;st.setProperty("--bg",o.bg);st.setProperty("--panel",o.panel);st.setProperty("--ink",o.ink);st.setProperty("--accent",o.accent);}
-function heading(t,s){$("title").textContent=t;$("sub").textContent=s;document.title=t;}
+function heading(t,s){$("title").textContent=t;$("sub").textContent=s;document.title=t;restart($("title"));restart($("sub"));}
 function tile(name,k){
 var col=r.palette[k%r.palette.length],d=document.createElement("div");
 d.className="tile";d.style.background=col;d.style.color=textOn(col);
@@ -242,6 +252,7 @@ try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
 if(k&&k.indexOf("wheelRun:")===0&&k.slice(-suf.length)===suf){JSON.parse(localStorage.getItem(k)).forEach(function(e){u.wins.push(e.win);if(e.choice)u.choices.push(e.choice);});}}}catch(e){}
 return u;
 }
+function anyGift(){for(var i=0;i<rounds.length;i++)if(loadGift(i))return true;return false;}
 function anyLog(){for(var i=0;i<rounds.length;i++)if(loadRun(i).length)return true;return false;}
 function renderRounds(){
 var box=$("rounds");box.innerHTML="";
@@ -257,7 +268,7 @@ box.appendChild(b);
 function canComplete(){return r&&!pending&&!spinning&&(log.length>=max()||!opts.length||(r.endEarly&&log.length>0));}
 function updateStatus(){
 var st=$("status");
-$("contract").hidden=!!team;$("teamBar").hidden=!team;$("rounds").hidden=!team;
+$("contract").hidden=!!team;$("teamBar").hidden=!team;$("rounds").hidden=!(team&&(gift||anyGift()));
 $("copyLog").hidden=!(team&&anyLog());
 if(!team)st.textContent="";
 else if(!r)st.textContent="Signed by "+team;
@@ -266,7 +277,7 @@ else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Signed by "+
 else st.textContent="Signed by "+team+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
 if(team)renderRounds();
 var c=$("completeBtn");c.hidden=!(r&&(gift||canComplete()));
-c.textContent=gift?"View your final scroll":"Round complete";
+c.textContent=gift?"View your final scroll":"Round complete.";
 setSpin();
 }
 function landing(){
@@ -280,7 +291,7 @@ ri=i;r=rounds[i];imgs=r.images||{};log=loadRun(i);gift=loadGift(i);used=scanUsed
 opts=r.options.slice(0,24);
 if(r.noRepeats!==false)opts=opts.filter(function(o){return used.wins.indexOf(o)<0;});
 cur=0;theme(r);heading(r.title,r.sub);
-$("game").hidden=false;$("choices").hidden=true;result.innerHTML="";
+$("game").hidden=false;restart($("game"));$("choices").hidden=true;result.innerHTML="";
 renderHistory();draw();updateStatus();
 }
 function show(main,small){result.innerHTML="";var s=document.createElement("span");s.textContent=main;result.appendChild(s);var m=document.createElement("small");m.textContent=small;result.appendChild(m);}
