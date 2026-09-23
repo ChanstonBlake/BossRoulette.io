@@ -1,127 +1,189 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Spin the Roulette</title>
+<title>The Contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0910;--panel:#171223;--ink:#e6dff0;--accent:#c9a24d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#0a0910;--panel:#171223;--ink:#e6dff0;--accent:#c9a24d;--script:"Great Vibes","Snell Roundhand","Brush Script MT",cursive;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--panel),var(--bg) 70%) fixed,var(--bg);color:var(--ink);font-family:Georgia,"Palatino Linotype","Book Antiqua",serif;min-height:100vh}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--panel),var(--bg) 70%) fixed,var(--bg);color:var(--ink);font-family:"Caveat","Segoe Script","Snell Roundhand","Brush Script MT",cursive;font-size:1.35rem;min-height:100vh}
 main{max-width:800px;margin:0 auto;padding:24px 16px 40px}
-h1{font-size:clamp(2rem,6vw,3rem);margin:0 0 4px;letter-spacing:.06em;text-shadow:0 0 24px color-mix(in srgb,var(--accent) 45%,transparent)}
-.sub{opacity:.75;margin:0 0 16px}
+h1,h2{font-family:var(--script);font-weight:400}
+h1{font-size:clamp(3rem,10vw,5rem);margin:0 0 4px;line-height:1.05;text-align:center;text-shadow:0 0 28px color-mix(in srgb,var(--accent) 55%,transparent)}
+.sub{opacity:.8;margin:0 0 18px;text-align:center;font-size:1.5rem}
 button{font:inherit;cursor:pointer;border:0;border-radius:999px}
-button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
-#teamBox{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 auto 14px}
-#teamBox input{font:inherit;padding:10px 14px;border-radius:999px;border:2px solid var(--accent);background:var(--panel);color:var(--ink);min-width:220px}
-#teamBox button{padding:10px 20px;background:var(--accent);color:var(--bg);font-weight:700}
-#status{text-align:center;margin:0 0 16px;opacity:.85}
+button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#contract{max-width:640px;margin:10px auto 0;padding:28px 26px;border:2px solid var(--accent);border-radius:6px;background:linear-gradient(160deg,var(--panel),var(--bg));box-shadow:0 0 50px color-mix(in srgb,var(--accent) 25%,transparent),inset 0 0 40px rgba(0,0,0,.55);text-align:center}
+#contract p{font-size:1.6rem;line-height:1.3;margin:0 0 24px}
+#contract label{display:block;font-family:var(--script);font-size:2rem;color:var(--accent)}
+.sig{width:100%;font-family:var(--script);font-size:2.8rem;text-align:center;background:none;border:0;border-bottom:2px solid var(--accent);color:var(--ink);padding:6px}
+#startBtn{margin-top:22px;padding:12px 34px;background:var(--accent);color:var(--bg);font-weight:700;font-size:1.6rem}
+#teamBar{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+#status{margin:0;opacity:.9;font-size:1.5rem}
+#switchTeam{padding:6px 16px;background:#ffffff1f;color:var(--ink)}
 #rounds{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 20px}
-#rounds button{padding:12px 24px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:700}
+#rounds button{padding:8px 24px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:700;font-size:1.5rem}
 #rounds button.on{background:var(--accent);color:var(--bg)}
 #rounds button:disabled{opacity:.5;cursor:default}
 .viewport{position:relative;overflow:hidden;background:var(--panel);border-radius:16px;height:200px;border:3px solid var(--accent);box-shadow:0 0 40px color-mix(in srgb,var(--accent) 22%,transparent)}
 .viewport::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg),transparent 22%,transparent 78%,var(--bg));pointer-events:none;z-index:1}
-#strip{display:flex;height:100%;position:absolute;left:0;top:0;will-change:transform}
-.tile{flex:0 0 150px;width:150px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center;font-weight:700;border-right:3px solid var(--bg);overflow:hidden}
+.strip{display:flex;height:100%;position:absolute;left:0;top:0;will-change:transform}
+.tile{flex:0 0 150px;width:150px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;font-weight:700;border-right:3px solid var(--bg);overflow:hidden}
 .tile img{max-width:100px;max-height:100px;object-fit:contain}
-.tile span{font-size:1.05rem;line-height:1.15;overflow-wrap:anywhere}
+.tile span{font-size:1.5rem;line-height:1;overflow-wrap:anywhere}
 .marker{position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:var(--accent);z-index:2;box-shadow:0 0 12px var(--accent)}
 .marker::before{content:"";position:absolute;top:0;left:-10px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid var(--accent)}
-.empty{padding:80px 20px;opacity:.8}
-#spin{display:block;margin:20px auto 0;padding:14px 48px;font-size:1.3rem;font-weight:700;background:var(--accent);color:var(--bg)}
-#spin:disabled{opacity:.6;cursor:default}
-#result{text-align:center;min-height:3.2em;margin-top:16px;font-size:1.5rem;font-weight:700}
-#result small{display:block;opacity:.75;font-size:.9rem;font-weight:400}
+.empty{padding:80px 20px;opacity:.8;font-size:1.6rem}
+.big{display:block;margin:20px auto 0;padding:10px 52px;font-size:2rem;font-weight:700;background:var(--accent);color:var(--bg)}
+.big:disabled{opacity:.55;cursor:default}
+#result{text-align:center;min-height:3.4em;margin-top:14px;font-size:2.3rem;font-weight:700;line-height:1.1}
+#result small{display:block;opacity:.75;font-size:1.3rem;font-weight:500}
 #choices{text-align:center;margin-top:8px}
-#choices p{margin:0 0 10px;opacity:.75}
+#choices p{margin:0 0 10px;opacity:.85;font-size:1.6rem}
 #choices .list{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-#choices button{padding:10px 20px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:600}
+#choices button{padding:6px 22px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:700;font-size:1.5rem}
 #choices button:hover{background:var(--accent);color:var(--bg)}
-#choices button img{height:28px;vertical-align:middle;margin-right:8px}
-#history{opacity:.8;font-size:.9rem;padding-left:20px}
-#copyLog{margin:8px 0;padding:7px 14px;background:#ffffff26;color:var(--ink)}
+#choices button img{height:30px;vertical-align:middle;margin-right:8px}
+#history{opacity:.85;font-size:1.4rem;padding-left:24px}
+#completeBtn{margin-top:22px;font-family:var(--script);font-size:2.4rem;font-weight:400;padding:8px 44px;background:transparent;color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 26px color-mix(in srgb,var(--accent) 45%,transparent)}
+#completeBtn:hover{background:var(--accent);color:var(--bg)}
+#copyLog{margin:12px auto 0;display:block;padding:4px 16px;background:#ffffff1f;color:var(--ink)}
+/* finale */
+#modal{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 35%,rgba(23,18,35,.97),rgba(0,0,0,.99));display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;animation:fade 1.4s both}
+#modal .card{max-width:720px;width:100%;text-align:center;margin:auto}
+#mTitle{font-family:var(--script);font-weight:400;font-size:clamp(3rem,11vw,5.5rem);line-height:1.05;margin:0 0 6px;color:var(--accent);text-shadow:0 0 34px var(--accent);animation:reveal 2.6s both}
+#mSub{font-size:1.8rem;opacity:.9;margin:0 0 20px;animation:reveal 2.6s 1.2s both}
+#mList{list-style:none;padding:0;margin:0 0 10px}
+.entry{font-size:clamp(1.9rem,6vw,2.7rem);margin:12px 0;line-height:1.1;animation:reveal 1.8s both}
+.entry b{color:var(--accent);font-weight:700}
+#skip{background:none;color:var(--ink);opacity:.55;font-size:1.2rem;text-decoration:underline;margin-top:6px}
+#giftBox{margin-top:18px;animation:reveal 2s both}
+#giftBox .ask{font-family:var(--script);font-size:clamp(2.4rem,8vw,3.6rem);color:var(--accent);margin:0 0 14px}
+#giftResult{font-family:var(--script);font-size:clamp(2.8rem,10vw,4.6rem);line-height:1.05;margin:22px 0 8px;color:var(--ink);text-shadow:0 0 30px var(--accent);animation:reveal 2.4s both}
+#closeBtn{margin-top:18px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes reveal{from{opacity:0;filter:blur(12px);transform:translateY(16px) scale(.96)}to{opacity:1;filter:none;transform:none}}
+@media(prefers-reduced-motion:reduce){#modal,#mTitle,#mSub,.entry,#giftBox,#giftResult{animation-duration:.01s;animation-delay:0s}}
 </style>
 </head>
 <body>
 <main>
 <h1 id="title"></h1>
 <p class="sub" id="sub"></p>
-<div id="teamBox"><input id="team" type="text" maxlength="40" placeholder="Team name" aria-label="Team name"><button id="startBtn">Start</button><button id="switchTeam" hidden>Switch team</button></div>
-<p id="status"></p>
+
+<div id="contract">
+<p id="contractText"></p>
+<label for="team">Sign away your Soul</label>
+<input id="team" class="sig" type="text" maxlength="40" placeholder="Sign away your Soul" autocomplete="off" aria-label="Sign away your Soul">
+<button id="startBtn">Sign the contract.</button>
+</div>
+
+<div id="teamBar" hidden><p id="status"></p><button id="switchTeam">New team</button></div>
 <div id="rounds" hidden></div>
+
 <div id="game" hidden>
-<div id="viewport" class="viewport" aria-label="Roulette"><div class="marker"></div><div id="strip"></div></div>
-<button id="spin">Spin</button>
+<div id="viewport" class="viewport" aria-label="Roulette"><div class="marker"></div><div id="strip" class="strip"></div></div>
+<button id="spin" class="big">Spin</button>
 <div id="result" aria-live="polite"></div>
 <div id="choices" hidden></div>
 <ol id="history" reversed aria-label="Spin history"></ol>
+<button id="completeBtn" hidden>Round complete.</button>
 </div>
 <button id="copyLog" hidden>Copy results</button>
 </main>
 
+<div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
+<div class="card">
+<h2 id="mTitle"></h2>
+<p id="mSub"></p>
+<ul id="mList"></ul>
+<button id="skip">skip the wait</button>
+<div id="giftBox" hidden>
+<p class="ask" id="giftAsk">Fate offers you a gift…</p>
+<div id="gView" class="viewport" aria-label="Gift roulette"><div class="marker"></div><div id="gStrip" class="strip"></div></div>
+<button id="giftSpin" class="big">Claim your gift</button>
+<div id="giftResult"></div>
+<button id="closeBtn" class="big" hidden>Close</button>
+</div>
+</div>
+</div>
+
 <script>
 /* =====================================================================
-   EDIT HERE. Everything about your rounds lives in this block.
+   EDIT HERE. Everything about your event lives in this block.
 
-   - title / sub: heading shown before a team picks a round.
-   - Each entry in "rounds" becomes a button (Round 1, Round 2, ...) that
-     teams choose after entering their name. Each round has its own
-     wheel options, choices, colors and images. Copy a whole { ... }
-     entry and paste it after a comma to add another round.
+   - title / sub / contract: text on the sign-the-contract screen.
+   - Each entry in "rounds" becomes a button (Round 1, Round 2, ...).
+     Round 1 opens by default after a team signs. Each round has its own
+     wheel options, choices, gifts, colors and images. Copy a whole
+     { ... } entry and paste it after a comma to add another round.
    - options: what the roulette lands on. choices: the list players pick
-     from after the spin (use [] to skip that step).
-   - images: optional. Match the exact option/choice name to an image
-     file or URL, e.g. {"GWD":"images/gwd.png"}. Put the PNGs in the
-     repo next to this file.
-   - maxSpins: spins allowed per team, per round.
+     from after each spin (use [] to skip that step).
+   - gifts: the prizes on the end-of-round gift roulette (4 is ideal).
+   - finaleTitle: heading of the dramatic end-of-round popup.
+   - images: optional. Match the exact option/choice/gift name to an
+     image file or URL, e.g. {"GWD":"images/gwd.png"}.
+   - maxSpins: spins per team, per round. The "Round complete" button
+     appears when they are used up. endEarly:true lets teams press it
+     after any spin instead.
    - noRepeats: true = a team never gets an option or choice it already
      had, including in other rounds (same browser). false = repeats OK.
-   - Keep each round's "name" unique. Renaming a round resets its saved
-     spins for teams.
+   - Keep each round's "name" unique. Renaming resets saved progress.
    ===================================================================== */
 var CONFIG={
-title:"Spin the roulette",
-sub:"Enter your team name, then choose a round.",
+title:"The Contract",
+sub:"Read carefully. Sign boldly.",
+contract:"We, the undersigned, do solemnly swear to face every trial the roulette decrees, to honour each challenge we choose, and to accept our fate without complaint. Sign below, and there is no turning back.",
 rounds:[
 {
 name:"Round 1",
 title:"Round 1",
-sub:"Spin for the Boss/Raid and then choose the challenge.",
+sub:"Spin for the Prison, and then choose the punishment.",
+finaleTitle:"The contract is sealed",
 bg:"#0a0910", panel:"#171223", ink:"#e6dff0", accent:"#c9a24d",
 palette:["#3b0d2e","#1b2440","#4a1220","#0f3d3e","#2b1a4d","#3a2a12","#12312a","#5a1e3c"],
 options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],
 choices:["100 KC","150 KC","Purple","25m Uniques","2 GM CAs"],
+gifts:["Australian Worlds","No Megas","Free reroll","Mirror Image"],
 images:{},
 noRepeats:true,
+endEarly:false,
 maxSpins:5
 },
 {
 name:"Round 2",
 title:"Round 2",
 sub:"Placeholder: edit this round's options and choices.",
+finaleTitle:"Your fate is written",
 bg:"#0d0709", panel:"#22111a", ink:"#f0dde0", accent:"#c94a56",
 palette:["#4a1220","#2a0f1e","#5a1e2c","#1f1a33","#3d1420","#33121c","#2b1d3a","#471526"],
 options:["Zulrah","Vorkath","Hydra","Cerberus","Corp","Kraken","Sarachnis","Vardorvis"],
 choices:["50 KC","100 KC","Pet","Any Unique"],
+gifts:["Mystery prize","Bonus points","Free reroll","Golden ticket"],
 images:{},
 noRepeats:true,
+endEarly:false,
 maxSpins:5
 },
 {
 name:"Round 3",
 title:"Round 3",
 sub:"Placeholder: edit this round's options and choices.",
+finaleTitle:"The final verdict",
 bg:"#060d0e", panel:"#0e1e20", ink:"#dcefee", accent:"#4fb3a9",
 palette:["#0f3d3e","#12312a","#16283d","#1b3a35","#0e2a30","#1c3328","#172a44","#123a44"],
 options:["Inferno","Colosseum","Gauntlet","ToA 300","Hard CoX","CM CoX","ToB Hard","Nightmare"],
 choices:["Solo","Duo","Trio","No Food"],
+gifts:["Mystery prize","Bonus points","Free reroll","Golden ticket"],
 images:{},
 noRepeats:true,
+endEarly:false,
 maxSpins:5
 }
 ]
@@ -132,9 +194,10 @@ maxSpins:5
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
-var rounds=CONFIG.rounds;
-var spinBtn=$("spin"),result=$("result"),strip=$("strip"),vp=$("viewport"),TW=150;
-var r=null,ri=-1,imgs={},opts=[],spinning=false,pending=false,team="",log=[],cur=0,used={wins:[],choices:[]};
+var rounds=CONFIG.rounds,TW=150;
+var spinBtn=$("spin"),result=$("result"),strip=$("strip"),vp=$("viewport"),gStrip=$("gStrip"),gView=$("gView");
+var r=null,ri=-1,imgs={},opts=[],spinning=false,pending=false,rolling=false,team="",log=[],cur=0,gift="",used={wins:[],choices:[]},timers=[];
+var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function textOn(hex){var n=parseInt(hex.slice(1),16),R=n>>16,G=(n>>8)&255,B=n&255;return (0.299*R+0.587*G+0.114*B)>150?"#1d2a44":"#ffffff";}
 function theme(o){var st=document.documentElement.style;st.setProperty("--bg",o.bg);st.setProperty("--panel",o.panel);st.setProperty("--ink",o.ink);st.setProperty("--accent",o.accent);}
@@ -145,19 +208,29 @@ d.className="tile";d.style.background=col;d.style.color=textOn(col);
 if(imgs[name]){var im=document.createElement("img");im.src=imgs[name];im.alt="";d.appendChild(im);}
 var sp=document.createElement("span");sp.textContent=name;d.appendChild(sp);return d;
 }
-function place(o){strip.style.transform="translateX("+(-o)+"px)";}
-function centerOf(t){return t*TW+TW/2-vp.clientWidth/2;}
-function build(first,cycles){
-strip.innerHTML="";var n=opts.length;
-if(n<1){strip.innerHTML='<div class="empty">No options left</div>';return;}
-for(var i=0;i<n*cycles;i++){var k=(first+i)%n;strip.appendChild(tile(opts[k],k));}
+function place(el,o){el.style.transform="translateX("+(-o)+"px)";}
+function ctr(view,t){return t*TW+TW/2-view.clientWidth/2;}
+function build(el,list,first,cycles){
+el.innerHTML="";var n=list.length;
+if(n<1){el.innerHTML='<div class="empty">No options left</div>';return;}
+for(var i=0;i<n*cycles;i++){var k=(first+i)%n;el.appendChild(tile(list[k],k));}
 }
-function draw(){if(spinning||!r)return;var n=opts.length;build(n?cur%n:0,3);place(centerOf(0));}
+function draw(){if(spinning||!r)return;var n=opts.length;build(strip,opts,n?cur%n:0,3);place(strip,ctr(vp,0));}
+function roll(el,view,list,first,dur,cb){
+var n=list.length,cycles=Math.ceil(50/n)+2,w=Math.floor(Math.random()*n),f=first%n;
+build(el,list,f,cycles);var start=ctr(view,0);place(el,start);
+var t=n*(cycles-2)+((w-f+n)%n),end=ctr(view,t)+(Math.random()-.5)*TW*.7;
+var d=reduce?600:dur,t0=null;
+function frame(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/d,1),e=1-Math.pow(1-p,4);place(el,start+(end-start)*e);if(p<1)requestAnimationFrame(frame);else cb(w);}
+requestAnimationFrame(frame);
+}
 function max(){return r.maxSpins||5;}
-function setSpin(){spinBtn.disabled=!r||!team||spinning||pending||!opts.length||log.length>=max();}
-function key(i,t){return "wheelRun:"+rounds[i].name+":"+t.toLowerCase();}
-function saveRun(){try{localStorage.setItem(key(ri,team),JSON.stringify(log));}catch(e){}}
-function loadRun(i){try{var a=JSON.parse(localStorage.getItem(key(i,team)));if(Array.isArray(a))return a;}catch(e){}return [];}
+function setSpin(){spinBtn.disabled=!r||!team||spinning||pending||!!gift||!opts.length||log.length>=max();}
+function key(p,i,t){return p+":"+rounds[i].name+":"+t.toLowerCase();}
+function saveRun(){try{localStorage.setItem(key("wheelRun",ri,team),JSON.stringify(log));}catch(e){}}
+function loadRun(i){try{var a=JSON.parse(localStorage.getItem(key("wheelRun",i,team)));if(Array.isArray(a))return a;}catch(e){}return [];}
+function saveGift(){try{localStorage.setItem(key("wheelGift",ri,team),gift);}catch(e){}}
+function loadGift(i){try{return localStorage.getItem(key("wheelGift",i,team))||"";}catch(e){return "";}}
 function line(e){return e.win+(e.choice?" → "+e.choice:"");}
 function renderHistory(){
 var h=$("history");h.innerHTML="";
@@ -173,33 +246,37 @@ function anyLog(){for(var i=0;i<rounds.length;i++)if(loadRun(i).length)return tr
 function renderRounds(){
 var box=$("rounds");box.innerHTML="";
 rounds.forEach(function(o,i){
-var b=document.createElement("button"),n=(i===ri?log:loadRun(i)).length;
-b.textContent=o.name+(n?" · "+n+"/"+(o.maxSpins||5):"");
+var b=document.createElement("button"),n=(i===ri?log:loadRun(i)).length,g=i===ri?gift:loadGift(i);
+b.textContent=o.name+(g?" ✓":(n?" · "+n+"/"+(o.maxSpins||5):""));
 if(i===ri)b.className="on";
 b.disabled=spinning||pending;
 b.addEventListener("click",function(){chooseRound(i);});
 box.appendChild(b);
 });
 }
+function canComplete(){return r&&!pending&&!spinning&&(log.length>=max()||!opts.length||(r.endEarly&&log.length>0));}
 function updateStatus(){
 var st=$("status");
-$("team").hidden=$("startBtn").hidden=!!team;$("switchTeam").hidden=!team;
-$("rounds").hidden=!team;$("copyLog").hidden=!(team&&anyLog());
-if(!team)st.textContent="Enter your team name to begin.";
-else if(!r)st.textContent="Team "+team+": choose a round.";
-else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Team "+team+(log.length>=max()?": all "+max()+" spins used in "+r.name+".":": no options left in "+r.name+".");
-else st.textContent="Team "+team+" · "+r.name+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
+$("contract").hidden=!!team;$("teamBar").hidden=!team;$("rounds").hidden=!team;
+$("copyLog").hidden=!(team&&anyLog());
+if(!team)st.textContent="";
+else if(!r)st.textContent="Signed by "+team;
+else if(gift)st.textContent="Signed by "+team+" · "+r.name+" complete";
+else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Signed by "+team+" · all spins used";
+else st.textContent="Signed by "+team+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
 if(team)renderRounds();
+var c=$("completeBtn");c.hidden=!(r&&(gift||canComplete()));
+c.textContent=gift?"View your final scroll":"Round complete";
 setSpin();
 }
 function landing(){
-r=null;ri=-1;imgs={};opts=[];log=[];cur=0;pending=false;
-theme(rounds[0]);heading(CONFIG.title,CONFIG.sub);
+r=null;ri=-1;imgs={};opts=[];log=[];cur=0;gift="";pending=false;
+theme(rounds[0]);heading(CONFIG.title,CONFIG.sub);$("contractText").textContent=CONFIG.contract;
 $("game").hidden=true;$("choices").hidden=true;result.innerHTML="";$("history").innerHTML="";
 }
 function chooseRound(i){
 if(spinning||pending||!team)return;
-ri=i;r=rounds[i];imgs=r.images||{};log=loadRun(i);used=scanUsed(team);
+ri=i;r=rounds[i];imgs=r.images||{};log=loadRun(i);gift=loadGift(i);used=scanUsed(team);
 opts=r.options.slice(0,24);
 if(r.noRepeats!==false)opts=opts.filter(function(o){return used.wins.indexOf(o)<0;});
 cur=0;theme(r);heading(r.title,r.sub);
@@ -208,14 +285,9 @@ renderHistory();draw();updateStatus();
 }
 function show(main,small){result.innerHTML="";var s=document.createElement("span");s.textContent=main;result.appendChild(s);var m=document.createElement("small");m.textContent=small;result.appendChild(m);}
 function spin(){
-if(!r||!team||spinning||pending||opts.length<1||log.length>=max())return;
+if(!r||!team||spinning||pending||gift||opts.length<1||log.length>=max())return;
 spinning=true;updateStatus();result.textContent="";
-var n=opts.length,cycles=Math.ceil(50/n)+2,w=Math.floor(Math.random()*n),f=cur%n;
-build(f,cycles);var start=centerOf(0);place(start);
-var t=n*(cycles-2)+((w-f+n)%n),end=centerOf(t)+(Math.random()-.5)*TW*.7;
-var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches,dur=reduce?600:6000,t0=null;
-function frame(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-p,4);place(start+(end-start)*e);if(p<1)requestAnimationFrame(frame);else finish(w);}
-requestAnimationFrame(frame);
+roll(strip,vp,opts,cur,6000,finish);
 }
 function finish(idx){
 var win=opts[idx];cur=idx;
@@ -244,9 +316,63 @@ wrap.appendChild(b);
 });
 box.appendChild(wrap);
 }
+
+/* ---------- finale popup ---------- */
+function later(fn,ms){timers.push(setTimeout(fn,ms));}
+function clearTimers(){timers.forEach(clearTimeout);timers=[];}
+function restart(el){el.style.animation="none";void el.offsetWidth;el.style.animation="";}
+function addEntry(e,instant){
+var li=document.createElement("li");li.className="entry";
+var b=document.createElement("b");b.textContent=e.win;li.appendChild(b);
+if(e.choice)li.appendChild(document.createTextNode(" — "+e.choice));
+if(instant)li.style.animation="none";
+$("mList").appendChild(li);
+}
+function showGiftResult(g,instant){
+$("giftBox").hidden=false;$("giftAsk").textContent="Fate has granted you";
+$("gView").hidden=instant;$("giftSpin").hidden=true;
+var gr=$("giftResult");gr.textContent=g;restart(gr);if(instant)gr.style.animation="none";
+$("closeBtn").hidden=false;$("skip").hidden=true;
+}
+function revealGift(){
+$("skip").hidden=true;
+if(gift){showGiftResult(gift,true);return;}
+$("giftBox").hidden=false;$("giftAsk").textContent="Fate offers you a gift…";
+$("gView").hidden=false;$("giftSpin").hidden=false;$("giftSpin").disabled=false;$("giftResult").textContent="";
+build(gStrip,r.gifts,0,3);place(gStrip,ctr(gView,0));
+}
+function openFinale(){
+clearTimers();
+var m=$("modal"),list=$("mList");m.hidden=false;document.body.style.overflow="hidden";m.scrollTop=0;
+list.innerHTML="";$("giftBox").hidden=true;$("closeBtn").hidden=true;$("giftResult").textContent="";
+$("mTitle").textContent=r.finaleTitle||"The contract is sealed";
+$("mSub").textContent="Team "+team+", here is what fate has written…";
+restart($("mTitle"));restart($("mSub"));
+if(gift){$("skip").hidden=true;log.forEach(function(e){addEntry(e,true);});revealGift();return;}
+$("skip").hidden=false;
+var step=reduce?300:2000,d=reduce?300:4200;
+log.forEach(function(e,i){later(function(){addEntry(e,false);},d+i*step);});
+later(revealGift,d+log.length*step+900);
+}
+$("skip").addEventListener("click",function(){clearTimers();$("mList").innerHTML="";log.forEach(function(e){addEntry(e,true);});revealGift();});
+$("giftSpin").addEventListener("click",function(){
+if(rolling||gift)return;
+rolling=true;$("giftSpin").disabled=true;
+roll(gStrip,gView,r.gifts,0,7500,function(idx){
+gift=r.gifts[idx];saveGift();rolling=false;
+setTimeout(function(){showGiftResult(gift,false);},reduce?0:900);
+});
+});
+$("closeBtn").addEventListener("click",function(){
+if(rolling)return;
+clearTimers();$("modal").hidden=true;document.body.style.overflow="";updateStatus();
+});
+$("completeBtn").addEventListener("click",function(){if(r&&(gift||canComplete()))openFinale();});
+
+/* ---------- team / misc ---------- */
 function startTeam(){
-var v=$("team").value.trim();if(!v)return;
-team=v;landing();updateStatus();
+var v=$("team").value.trim();if(!v){$("team").focus();return;}
+team=v;landing();chooseRound(0);
 }
 $("startBtn").addEventListener("click",startTeam);
 $("team").addEventListener("keydown",function(e){if(e.key==="Enter")startTeam();});
@@ -256,7 +382,8 @@ team="";used={wins:[],choices:[]};$("team").value="";landing();updateStatus();
 });
 $("copyLog").addEventListener("click",function(){
 var t="Team: "+team;
-rounds.forEach(function(o,i){var l=i===ri?log:loadRun(i);if(l.length)t+="\n\n"+o.name+":\n"+l.map(function(e,j){return (j+1)+". "+line(e);}).join("\n");});
+rounds.forEach(function(o,i){var l=i===ri?log:loadRun(i),g=i===ri?gift:loadGift(i);
+if(l.length||g)t+="\n\n"+o.name+":\n"+l.map(function(e,j){return (j+1)+". "+line(e);}).join("\n")+(g?"\nGift: "+g:"");});
 try{navigator.clipboard.writeText(t).then(function(){$("copyLog").textContent="Copied";setTimeout(function(){$("copyLog").textContent="Copy results";},1500);},function(){window.prompt("Copy your results",t);});}catch(e){window.prompt("Copy your results",t);}
 });
 spinBtn.addEventListener("click",spin);
