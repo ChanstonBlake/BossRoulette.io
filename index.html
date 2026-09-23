@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,12 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Spin the Roulette</title>
 <style>
-:root{--bg:#1d2a44;--panel:#26365a;--ink:#fff7e6;--accent:#ffb400;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#0a0910;--panel:#171223;--ink:#e6dff0;--accent:#c9a24d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,sans-serif;min-height:100vh}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,var(--panel),var(--bg) 70%) fixed,var(--bg);color:var(--ink);font-family:Georgia,"Palatino Linotype","Book Antiqua",serif;min-height:100vh}
 main{max-width:800px;margin:0 auto;padding:24px 16px 40px}
-h1{font-size:clamp(2rem,6vw,3rem);margin:0 0 4px}
+h1{font-size:clamp(2rem,6vw,3rem);margin:0 0 4px;letter-spacing:.06em;text-shadow:0 0 24px color-mix(in srgb,var(--accent) 45%,transparent)}
 .sub{opacity:.75;margin:0 0 16px}
 button{font:inherit;cursor:pointer;border:0;border-radius:999px}
 button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
@@ -18,7 +20,12 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2
 #teamBox input{font:inherit;padding:10px 14px;border-radius:999px;border:2px solid var(--accent);background:var(--panel);color:var(--ink);min-width:220px}
 #teamBox button{padding:10px 20px;background:var(--accent);color:var(--bg);font-weight:700}
 #status{text-align:center;margin:0 0 16px;opacity:.85}
-.viewport{position:relative;overflow:hidden;background:var(--panel);border-radius:16px;height:200px;border:3px solid var(--accent)}
+#rounds{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 20px}
+#rounds button{padding:12px 24px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:700}
+#rounds button.on{background:var(--accent);color:var(--bg)}
+#rounds button:disabled{opacity:.5;cursor:default}
+.viewport{position:relative;overflow:hidden;background:var(--panel);border-radius:16px;height:200px;border:3px solid var(--accent);box-shadow:0 0 40px color-mix(in srgb,var(--accent) 22%,transparent)}
+.viewport::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg),transparent 22%,transparent 78%,var(--bg));pointer-events:none;z-index:1}
 #strip{display:flex;height:100%;position:absolute;left:0;top:0;will-change:transform}
 .tile{flex:0 0 150px;width:150px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center;font-weight:700;border-right:3px solid var(--bg);overflow:hidden}
 .tile img{max-width:100px;max-height:100px;object-fit:contain}
@@ -46,11 +53,14 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2
 <p class="sub" id="sub"></p>
 <div id="teamBox"><input id="team" type="text" maxlength="40" placeholder="Team name" aria-label="Team name"><button id="startBtn">Start</button><button id="switchTeam" hidden>Switch team</button></div>
 <p id="status"></p>
+<div id="rounds" hidden></div>
+<div id="game" hidden>
 <div id="viewport" class="viewport" aria-label="Roulette"><div class="marker"></div><div id="strip"></div></div>
 <button id="spin">Spin</button>
 <div id="result" aria-live="polite"></div>
 <div id="choices" hidden></div>
 <ol id="history" reversed aria-label="Spin history"></ol>
+</div>
 <button id="copyLog" hidden>Copy results</button>
 </main>
 
@@ -58,30 +68,60 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2
 /* =====================================================================
    EDIT HERE. Everything about your rounds lives in this block.
 
-   - Each round is one entry in "rounds". Copy a whole { ... } entry
-     and paste it after a comma to make a new round.
-   - "active" picks which round shows (0 = first, 1 = second, ...).
-     You can also override it with a link: yourpage/?round=2
+   - title / sub: heading shown before a team picks a round.
+   - Each entry in "rounds" becomes a button (Round 1, Round 2, ...) that
+     teams choose after entering their name. Each round has its own
+     wheel options, choices, colors and images. Copy a whole { ... }
+     entry and paste it after a comma to add another round.
    - options: what the roulette lands on. choices: the list players pick
      from after the spin (use [] to skip that step).
    - images: optional. Match the exact option/choice name to an image
      file or URL, e.g. {"GWD":"images/gwd.png"}. Put the PNGs in the
      repo next to this file.
-   - maxSpins: spins allowed per team.
+   - maxSpins: spins allowed per team, per round.
+   - noRepeats: true = a team never gets an option or choice it already
+     had, including in other rounds (same browser). false = repeats OK.
+   - Keep each round's "name" unique. Renaming a round resets its saved
+     spins for teams.
    ===================================================================== */
 var CONFIG={
-active:0,
+title:"Spin the roulette",
+sub:"Enter your team name, then choose a round.",
 rounds:[
 {
 name:"Round 1",
-title:"Spin the roulette",
+title:"Round 1",
 sub:"Spin for the Boss/Raid and then choose the challenge.",
-bg:"#1d2a44", panel:"#000000", ink:"#560319", accent:"#ff7f50",
-palette:["#560319","#ff7f50","#29a19c","#5b8def","#a76de0","#f28ab2","#6cc551","#ff8a3d"],
+bg:"#0a0910", panel:"#171223", ink:"#e6dff0", accent:"#c9a24d",
+palette:["#3b0d2e","#1b2440","#4a1220","#0f3d3e","#2b1a4d","#3a2a12","#12312a","#5a1e3c"],
 options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],
 choices:["100 KC","150 KC","Purple","25m Uniques","2 GM CAs"],
 images:{},
-removeWinner:true,
+noRepeats:true,
+maxSpins:5
+},
+{
+name:"Round 2",
+title:"Round 2",
+sub:"Placeholder: edit this round's options and choices.",
+bg:"#0d0709", panel:"#22111a", ink:"#f0dde0", accent:"#c94a56",
+palette:["#4a1220","#2a0f1e","#5a1e2c","#1f1a33","#3d1420","#33121c","#2b1d3a","#471526"],
+options:["Zulrah","Vorkath","Hydra","Cerberus","Corp","Kraken","Sarachnis","Vardorvis"],
+choices:["50 KC","100 KC","Pet","Any Unique"],
+images:{},
+noRepeats:true,
+maxSpins:5
+},
+{
+name:"Round 3",
+title:"Round 3",
+sub:"Placeholder: edit this round's options and choices.",
+bg:"#060d0e", panel:"#0e1e20", ink:"#dcefee", accent:"#4fb3a9",
+palette:["#0f3d3e","#12312a","#16283d","#1b3a35","#0e2a30","#1c3328","#172a44","#123a44"],
+options:["Inferno","Colosseum","Gauntlet","ToA 300","Hard CoX","CM CoX","ToB Hard","Nightmare"],
+choices:["Solo","Duo","Trio","No Food"],
+images:{},
+noRepeats:true,
 maxSpins:5
 }
 ]
@@ -92,14 +132,13 @@ maxSpins:5
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
-var q=parseInt(new URLSearchParams(location.search).get("round"),10)-1;
-var ri=CONFIG.rounds[q]?q:(CONFIG.rounds[CONFIG.active]?CONFIG.active:0);
-var r=CONFIG.rounds[ri];
+var rounds=CONFIG.rounds;
 var spinBtn=$("spin"),result=$("result"),strip=$("strip"),vp=$("viewport"),TW=150;
-var opts=r.options.slice(0,24),spinning=false,pending=false,team="",log=[],cur=0;
-var imgs=r.images||{};
+var r=null,ri=-1,imgs={},opts=[],spinning=false,pending=false,team="",log=[],cur=0,used={wins:[],choices:[]};
 
 function textOn(hex){var n=parseInt(hex.slice(1),16),R=n>>16,G=(n>>8)&255,B=n&255;return (0.299*R+0.587*G+0.114*B)>150?"#1d2a44":"#ffffff";}
+function theme(o){var st=document.documentElement.style;st.setProperty("--bg",o.bg);st.setProperty("--panel",o.panel);st.setProperty("--ink",o.ink);st.setProperty("--accent",o.accent);}
+function heading(t,s){$("title").textContent=t;$("sub").textContent=s;document.title=t;}
 function tile(name,k){
 var col=r.palette[k%r.palette.length],d=document.createElement("div");
 d.className="tile";d.style.background=col;d.style.color=textOn(col);
@@ -110,32 +149,67 @@ function place(o){strip.style.transform="translateX("+(-o)+"px)";}
 function centerOf(t){return t*TW+TW/2-vp.clientWidth/2;}
 function build(first,cycles){
 strip.innerHTML="";var n=opts.length;
-if(n<2){strip.innerHTML='<div class="empty">Add at least 2 options</div>';return;}
+if(n<1){strip.innerHTML='<div class="empty">No options left</div>';return;}
 for(var i=0;i<n*cycles;i++){var k=(first+i)%n;strip.appendChild(tile(opts[k],k));}
 }
-function draw(){if(spinning)return;var n=opts.length;build(n?cur%n:0,3);place(centerOf(0));}
+function draw(){if(spinning||!r)return;var n=opts.length;build(n?cur%n:0,3);place(centerOf(0));}
 function max(){return r.maxSpins||5;}
-function setSpin(){spinBtn.disabled=!team||spinning||pending||log.length>=max();}
-function runKey(){return "wheelRun:"+r.name+":"+team.toLowerCase();}
-function saveRun(){try{localStorage.setItem(runKey(),JSON.stringify(log));}catch(e){}}
-function loadRun(){try{var a=JSON.parse(localStorage.getItem(runKey()));if(Array.isArray(a))return a;}catch(e){}return [];}
+function setSpin(){spinBtn.disabled=!r||!team||spinning||pending||!opts.length||log.length>=max();}
+function key(i,t){return "wheelRun:"+rounds[i].name+":"+t.toLowerCase();}
+function saveRun(){try{localStorage.setItem(key(ri,team),JSON.stringify(log));}catch(e){}}
+function loadRun(i){try{var a=JSON.parse(localStorage.getItem(key(i,team)));if(Array.isArray(a))return a;}catch(e){}return [];}
 function line(e){return e.win+(e.choice?" → "+e.choice:"");}
 function renderHistory(){
 var h=$("history");h.innerHTML="";
 for(var i=log.length-1;i>=0;i--){var li=document.createElement("li");li.textContent=line(log[i]);h.appendChild(li);}
 }
+function scanUsed(t){
+var u={wins:[],choices:[]},suf=":"+t.toLowerCase();
+try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
+if(k&&k.indexOf("wheelRun:")===0&&k.slice(-suf.length)===suf){JSON.parse(localStorage.getItem(k)).forEach(function(e){u.wins.push(e.win);if(e.choice)u.choices.push(e.choice);});}}}catch(e){}
+return u;
+}
+function anyLog(){for(var i=0;i<rounds.length;i++)if(loadRun(i).length)return true;return false;}
+function renderRounds(){
+var box=$("rounds");box.innerHTML="";
+rounds.forEach(function(o,i){
+var b=document.createElement("button"),n=(i===ri?log:loadRun(i)).length;
+b.textContent=o.name+(n?" · "+n+"/"+(o.maxSpins||5):"");
+if(i===ri)b.className="on";
+b.disabled=spinning||pending;
+b.addEventListener("click",function(){chooseRound(i);});
+box.appendChild(b);
+});
+}
 function updateStatus(){
 var st=$("status");
-$("team").hidden=$("startBtn").hidden=!!team;$("switchTeam").hidden=!team;$("copyLog").hidden=!(team&&log.length);
+$("team").hidden=$("startBtn").hidden=!!team;$("switchTeam").hidden=!team;
+$("rounds").hidden=!team;$("copyLog").hidden=!(team&&anyLog());
 if(!team)st.textContent="Enter your team name to begin.";
-else if(log.length>=max()&&!pending)st.textContent="Team "+team+": all "+max()+" spins used.";
-else st.textContent="Team "+team+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
+else if(!r)st.textContent="Team "+team+": choose a round.";
+else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Team "+team+(log.length>=max()?": all "+max()+" spins used in "+r.name+".":": no options left in "+r.name+".");
+else st.textContent="Team "+team+" · "+r.name+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
+if(team)renderRounds();
 setSpin();
+}
+function landing(){
+r=null;ri=-1;imgs={};opts=[];log=[];cur=0;pending=false;
+theme(rounds[0]);heading(CONFIG.title,CONFIG.sub);
+$("game").hidden=true;$("choices").hidden=true;result.innerHTML="";$("history").innerHTML="";
+}
+function chooseRound(i){
+if(spinning||pending||!team)return;
+ri=i;r=rounds[i];imgs=r.images||{};log=loadRun(i);used=scanUsed(team);
+opts=r.options.slice(0,24);
+if(r.noRepeats!==false)opts=opts.filter(function(o){return used.wins.indexOf(o)<0;});
+cur=0;theme(r);heading(r.title,r.sub);
+$("game").hidden=false;$("choices").hidden=true;result.innerHTML="";
+renderHistory();draw();updateStatus();
 }
 function show(main,small){result.innerHTML="";var s=document.createElement("span");s.textContent=main;result.appendChild(s);var m=document.createElement("small");m.textContent=small;result.appendChild(m);}
 function spin(){
-if(!team||spinning||pending||opts.length<2||log.length>=max())return;
-spinning=true;setSpin();result.textContent="";
+if(!r||!team||spinning||pending||opts.length<1||log.length>=max())return;
+spinning=true;updateStatus();result.textContent="";
 var n=opts.length,cycles=Math.ceil(50/n)+2,w=Math.floor(Math.random()*n),f=cur%n;
 build(f,cycles);var start=centerOf(0);place(start);
 var t=n*(cycles-2)+((w-f+n)%n),end=centerOf(t)+(Math.random()-.5)*TW*.7;
@@ -144,17 +218,18 @@ function frame(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-p,4
 requestAnimationFrame(frame);
 }
 function finish(idx){
-var n=opts.length,win=opts[idx];cur=idx;
+var win=opts[idx];cur=idx;
 show(win,"You landed on this one");
 var entry={win:win,choice:""};log.push(entry);saveRun();renderHistory();
-if(r.removeWinner&&n>2){opts.splice(idx,1);cur=idx%opts.length;}
-spinning=false;updateStatus();
+if(r.noRepeats!==false){used.wins.push(win);opts.splice(idx,1);cur=opts.length?idx%opts.length:0;}
+spinning=false;
 showChoices(win,entry);
+updateStatus();
 }
 function showChoices(win,entry){
-var list=r.choices||[],box=$("choices");box.innerHTML="";
+var list=(r.choices||[]).filter(function(c){return r.noRepeats===false||used.choices.indexOf(c)<0;}),box=$("choices");box.innerHTML="";
 if(!list.length){box.hidden=true;return;}
-pending=true;setSpin();box.hidden=false;
+pending=true;box.hidden=false;
 var p=document.createElement("p");p.textContent="Now choose one:";box.appendChild(p);
 var wrap=document.createElement("div");wrap.className="list";
 list.forEach(function(item){
@@ -162,7 +237,7 @@ var b=document.createElement("button");
 if(imgs[item]){var im=document.createElement("img");im.src=imgs[item];im.alt="";b.appendChild(im);}
 b.appendChild(document.createTextNode(item));
 b.addEventListener("click",function(){
-entry.choice=item;saveRun();renderHistory();box.innerHTML="";box.hidden=true;
+entry.choice=item;used.choices.push(item);saveRun();renderHistory();box.innerHTML="";box.hidden=true;
 show(line(entry),"Choice locked in");pending=false;updateStatus();
 });
 wrap.appendChild(b);
@@ -171,22 +246,22 @@ box.appendChild(wrap);
 }
 function startTeam(){
 var v=$("team").value.trim();if(!v)return;
-team=v;log=loadRun();pending=false;$("choices").hidden=true;result.innerHTML="";renderHistory();updateStatus();
+team=v;landing();updateStatus();
 }
 $("startBtn").addEventListener("click",startTeam);
 $("team").addEventListener("keydown",function(e){if(e.key==="Enter")startTeam();});
-$("switchTeam").addEventListener("click",function(){team="";log=[];pending=false;$("team").value="";$("choices").hidden=true;result.innerHTML="";$("history").innerHTML="";updateStatus();});
+$("switchTeam").addEventListener("click",function(){
+if(spinning||pending)return;
+team="";used={wins:[],choices:[]};$("team").value="";landing();updateStatus();
+});
 $("copyLog").addEventListener("click",function(){
-var t="Team: "+team+"\n"+log.map(function(e,i){return (i+1)+". "+line(e);}).join("\n");
+var t="Team: "+team;
+rounds.forEach(function(o,i){var l=i===ri?log:loadRun(i);if(l.length)t+="\n\n"+o.name+":\n"+l.map(function(e,j){return (j+1)+". "+line(e);}).join("\n");});
 try{navigator.clipboard.writeText(t).then(function(){$("copyLog").textContent="Copied";setTimeout(function(){$("copyLog").textContent="Copy results";},1500);},function(){window.prompt("Copy your results",t);});}catch(e){window.prompt("Copy your results",t);}
 });
 spinBtn.addEventListener("click",spin);
 window.addEventListener("resize",draw);
-
-var st=document.documentElement.style;
-st.setProperty("--bg",r.bg);st.setProperty("--panel",r.panel);st.setProperty("--ink",r.ink);st.setProperty("--accent",r.accent);
-$("title").textContent=r.title;$("sub").textContent=r.sub;document.title=r.title;
-draw();updateStatus();
+landing();updateStatus();
 })();
 </script>
 </body>
