@@ -1,4 +1,4 @@
-"Spinning Wheel for a Boss Roulette Challenge - this is a private use IO"
+ROUND 1
 
 <!DOCTYPE html>
 <html lang="en">
@@ -92,11 +92,11 @@ input[type=color]{width:38px;height:32px;padding:0;border:0;background:none;curs
 <script>
 (function(){
 var DEFAULT={ver:1,pin:"1234",active:0,rounds:[{
-name:"Round 1",title:"Spin the wheel",sub:"One spin decides your pick.",
+name:"Round 1",title:"Spin the wheel",sub:"Spin for the Boss/Raid and then choose the challenge.",
 bg:"#1d2a44",panel:"#26365a",ink:"#fff7e6",accent:"#ffb400",
 palette:["#e4572e","#ffb400","#29a19c","#5b8def","#a76de0","#f28ab2","#6cc551","#ff8a3d"],
-options:["Free drink","Small prize","Trivia question","Dance challenge","Team photo","Try again","Big prize","Pick a friend"],
-choices:["Coffee mug","Sticker pack","Tote bag","Keychain","Notebook"],removeWinner:false}]};
+options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],
+choices:["100 KC","150 KC","Purple","25m Uniques","2 GM CAs"],removeWinner:false}]};
 var $=function(i){return document.getElementById(i)};
 var clone=function(o){return JSON.parse(JSON.stringify(o))};
 var cfg=clone(DEFAULT);
