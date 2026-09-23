@@ -102,7 +102,7 @@ var DEFAULT={ver:2,pin:"1234",active:0,rounds:[{
 name:"Round 1",title:"Spin the wheel",sub:"Spin for the Boss/Raid and then choose the challenge.",
 bg:"#1d2a44",panel:"#26365a",ink:"#fff7e6",accent:"#ffb400",
 palette:["#e4572e","#ffb400","#29a19c","#5b8def","#a76de0","#f28ab2","#6cc551","#ff8a3d"],
-options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],
+options:["GWD","TOA","TOB","Nex","CoX","Maggot King","Muspah","Nightmare/PNM"],removeWinner:false,}]}
 choices:["100 KC","150 KC","Purple","25m Uniques","2 GM CAs"],removeWinner:false,maxSpins:5}]};
 var $=function(i){return document.getElementById(i)};
 var clone=function(o){return JSON.parse(JSON.stringify(o))};
