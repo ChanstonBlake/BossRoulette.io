@@ -174,6 +174,7 @@ images:{
   "CG":"CG.webp",
   "ToA 300+":"TOA.webp",
   "CM CoX":"Great_Olm.webp",
+   "Vardorvis":"Vard.webp",
   "TOB HM":"Verzik_Vitur.webp"
 },
 rounds:[
@@ -258,13 +259,16 @@ function frame(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/d,1),e=1-Math.pow(1-p,4);
 requestAnimationFrame(frame);
 }
 function max(){return r.maxSpins||5;}
-function setSpin(){spinBtn.disabled=!r||!team||spinning||pending||!!gift||!opts.length||log.length>=max();}
+/* an "open" entry = a rerolled spin whose option was removed and is waiting for a new spin (its choice is kept) */
+function hasOpen(){return log.length>0&&!log[log.length-1].win;}
+function doneCount(){return log.length-(hasOpen()?1:0);}
+function setSpin(){spinBtn.disabled=!r||!team||spinning||pending||!!gift||!opts.length||(log.length>=max()&&!hasOpen());}
 function key(p,i,t){return p+":"+rounds[i].name+":"+t.toLowerCase();}
 function saveRun(){try{localStorage.setItem(key("wheelRun",ri,team),JSON.stringify(log));}catch(e){}}
 function loadRun(i){try{var a=JSON.parse(localStorage.getItem(key("wheelRun",i,team)));if(Array.isArray(a))return a;}catch(e){}return [];}
 function saveGift(){try{localStorage.setItem(key("wheelGift",ri,team),gift);}catch(e){}}
 function loadGift(i){try{return localStorage.getItem(key("wheelGift",i,team))||"";}catch(e){return "";}}
-function line(e){return e.win+(e.choice?" → "+e.choice:"");}
+function line(e){return (e.win||"(rerolled: awaiting new option)")+(e.choice?" → "+e.choice:"");}
 function renderHistory(){
 var h=$("history");h.innerHTML="";
 for(var i=log.length-1;i>=0;i--){var li=document.createElement("li");li.textContent=line(log[i]);h.appendChild(li);}
@@ -272,7 +276,7 @@ for(var i=log.length-1;i>=0;i--){var li=document.createElement("li");li.textCont
 function scanUsed(t){
 var u={wins:[],choices:[]},suf=":"+t.toLowerCase();
 try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);
-if(k&&k.indexOf("wheelRun:")===0&&k.slice(-suf.length)===suf){JSON.parse(localStorage.getItem(k)).forEach(function(e){u.wins.push(e.win);if(e.choice)u.choices.push(e.choice);});}}}catch(e){}
+if(k&&k.indexOf("wheelRun:")===0&&k.slice(-suf.length)===suf){JSON.parse(localStorage.getItem(k)).forEach(function(e){if(e.win)u.wins.push(e.win);if(e.rerolled)u.wins.push(e.rerolled);if(e.choice)u.choices.push(e.choice);});}}}catch(e){}
 return u;
 }
 function anyGift(){for(var i=0;i<rounds.length;i++)if(loadGift(i))return true;return false;}
@@ -283,20 +287,18 @@ function nextIncomplete(){for(var i=0;i<rounds.length;i++)if(!loadGift(i))return
 function rerollKey(i){return key("wheelRerollUsed",i,team);}
 function rerollUsed(){try{return !!localStorage.getItem(rerollKey(ri));}catch(e){return false;}}
 function rerollAvail(){return !!(r&&team&&ri>0&&/re-?roll/i.test(loadGift(ri-1))&&!rerollUsed());}
-function canReroll(){return rerollAvail()&&!gift&&!spinning&&!rolling&&log.length>0;}
+function canReroll(){return rerollAvail()&&!gift&&!spinning&&!rolling&&log.length>0&&!hasOpen()&&!log[log.length-1].choice;}
 function doReroll(){
 if(!canReroll())return;
-var e=log.pop();
+var e=log[log.length-1],old=e.win;
 try{localStorage.setItem(rerollKey(ri),"1");}catch(x){}
-if(r.noRepeats!==false){
-var wi=used.wins.indexOf(e.win);if(wi>-1)used.wins.splice(wi,1);
-if(e.choice){var ci=used.choices.indexOf(e.choice);if(ci>-1)used.choices.splice(ci,1);}
-opts=r.options.slice(0,24).filter(function(o){return used.wins.indexOf(o)<0;});
-}
+/* only usable BEFORE a choice is picked: the OPTION is removed (stays burned, never
+   returns to the wheel) and the slot waits for a new spin; the spin still counts once */
+e.rerolled=old;e.win="";
 saveRun();
 $("choices").innerHTML="";$("choices").hidden=true;pending=false;
-cur=0;renderHistory();draw();
-show("Free reroll used","Spin again");
+renderHistory();
+show("Free reroll used",old+" removed · spin again");
 updateStatus();
 }
 function renderRounds(){
@@ -317,7 +319,7 @@ else if(canView)b.addEventListener("click",function(){viewRound(i);});
 box.appendChild(b);
 });
 }
-function canComplete(){return r&&!pending&&!spinning&&(log.length>=max()||!opts.length||(r.endEarly&&log.length>0));}
+function canComplete(){return r&&!pending&&!spinning&&!hasOpen()&&(log.length>=max()||!opts.length||(r.endEarly&&log.length>0));}
 function updateStatus(){
 var st=$("status");
 $("contract").hidden=!!team;$("teamBar").hidden=!team;$("rounds").hidden=!(team&&(gift||anyGift()));
@@ -325,8 +327,8 @@ $("copyLog").hidden=!(team&&anyLog());
 if(!team)st.textContent="";
 else if(!r)st.textContent="Signed by "+team;
 else if(gift)st.textContent="Signed by "+team+" · "+r.name+" complete";
-else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Signed by "+team+" · all spins used";
-else st.textContent="Signed by "+team+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
+else if(!hasOpen()&&(log.length>=max()||!opts.length)&&!pending)st.textContent="Signed by "+team+" · all spins used";
+else st.textContent="Signed by "+team+" · spin "+Math.min(doneCount()+(pending?0:1),max())+" of "+max();
 if(team&&r&&!gift&&rerollAvail())st.textContent+=" · free reroll ready";
 $("rerollBtn").hidden=!canReroll();
 if(team)renderRounds();
@@ -350,17 +352,20 @@ renderHistory();draw();updateStatus();
 }
 function show(main,small){result.innerHTML="";var s=document.createElement("span");s.textContent=main;result.appendChild(s);var m=document.createElement("small");m.textContent=small;result.appendChild(m);}
 function spin(){
-if(!r||!team||spinning||pending||gift||opts.length<1||log.length>=max())return;
+if(!r||!team||spinning||pending||gift||opts.length<1||(log.length>=max()&&!hasOpen()))return;
 spinning=true;updateStatus();result.textContent="";
 roll(strip,vp,opts,cur,6000,finish);
 }
 function finish(idx){
 var win=opts[idx];cur=idx;
-show(win,"You landed on this one");
-var entry={win:win,choice:""};log.push(entry);saveRun();renderHistory();
+var entry;
+if(hasOpen()){entry=log[log.length-1];entry.win=win;}
+else{entry={win:win,choice:""};log.push(entry);}
+saveRun();renderHistory();
 if(r.noRepeats!==false){used.wins.push(win);opts.splice(idx,1);cur=opts.length?idx%opts.length:0;}
 spinning=false;
-showChoices(win,entry);
+if(entry.choice){show(line(entry),"New option, choice kept");pending=false;}
+else{show(win,"You landed on this one");showChoices(win,entry);}
 updateStatus();
 }
 function showChoices(win,entry){
