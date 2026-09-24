@@ -149,8 +149,10 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
    - maxSpins: spins per team, per round. The "Round complete" button
      appears when they are used up. endEarly:true lets teams press it
      after any spin instead.
-   - noRepeats: true = a team never gets an option or choice it already
-     had, including in other rounds (same browser). false = repeats OK.
+   - noRepeats: true = a team never gets an option it already had
+     (including in other rounds, same browser), and never repeats a
+     choice within the same round, so each round always offers its full
+     choices list. false = repeats OK.
    - Keep each round's "name" unique. Renaming resets saved progress.
    ===================================================================== */
 var CONFIG={
@@ -174,7 +176,6 @@ images:{
   "CG":"CG.webp",
   "ToA 300+":"TOA.webp",
   "CM CoX":"Great_Olm.webp",
-   "Vardorvis":"Vard.webp",
   "TOB HM":"Verzik_Vitur.webp"
 },
 rounds:[
@@ -271,7 +272,7 @@ function loadGift(i){try{return localStorage.getItem(key("wheelGift",i,team))||"
 function line(e){return (e.win||"(rerolled: awaiting new option)")+(e.choice?" → "+e.choice:"");}
 function renderHistory(){
 var h=$("history");h.innerHTML="";
-for(var i=log.length-1;i>=0;i--){var li=document.createElement("li");li.textContent=line(log[i]);h.appendChild(li);}
+for(var i=log.length-1;i>=0;i--){if(!log[i].win)continue;var li=document.createElement("li");li.textContent=line(log[i]);h.appendChild(li);}
 }
 function scanUsed(t){
 var u={wins:[],choices:[]},suf=":"+t.toLowerCase();
@@ -305,7 +306,7 @@ function renderRounds(){
 var box=$("rounds");box.innerHTML="";
 var nx=nextIncomplete();
 rounds.forEach(function(o,i){
-var b=document.createElement("button"),n=(i===ri?log:loadRun(i)).length,g=i===ri?gift:loadGift(i);
+var b=document.createElement("button"),n=(i===ri?doneCount():loadRun(i).length),g=i===ri?gift:loadGift(i);
 b.textContent=o.name+(g?" ✓":(n?" · "+n+"/"+(o.maxSpins||5):""));
 if(i===ri)b.className="on";
 /* Only the next unfinished round is clickable, and only once every earlier round is done. */
@@ -343,7 +344,7 @@ $("game").hidden=true;$("choices").hidden=true;result.innerHTML="";$("history").
 }
 function chooseRound(i){
 if(spinning||pending||!team)return;
-ri=i;r=rounds[i];imgs={};[CONFIG.images||{},r.images||{}].forEach(function(m){for(var k in m)imgs[k]=m[k];});log=loadRun(i);gift=loadGift(i);used=scanUsed(team);
+ri=i;r=rounds[i];imgs={};[CONFIG.images||{},r.images||{}].forEach(function(m){for(var k in m)imgs[k]=m[k];});log=loadRun(i);gift=loadGift(i);used=scanUsed(team);used.choices=log.map(function(e){return e.choice;}).filter(Boolean);
 opts=r.options.slice(0,24);
 if(r.noRepeats!==false)opts=opts.filter(function(o){return used.wins.indexOf(o)<0;});
 cur=0;theme(r);heading(r.title,r.sub);
@@ -466,7 +467,7 @@ team="";used={wins:[],choices:[]};$("team").value="";landing();updateStatus();
 $("copyLog").addEventListener("click",function(){
 var t="Team: "+team;
 rounds.forEach(function(o,i){var l=i===ri?log:loadRun(i),g=i===ri?gift:loadGift(i);
-if(l.length||g)t+="\n\n"+o.name+":\n"+l.map(function(e,j){return (j+1)+". "+line(e);}).join("\n")+(g?"\nGift: "+g:"");});
+if(l.length||g)t+="\n\n"+o.name+":\n"+l.filter(function(e){return e.win;}).map(function(e,j){return (j+1)+". "+line(e);}).join("\n")+(g?"\nGift: "+g:"");});
 try{navigator.clipboard.writeText(t).then(function(){$("copyLog").textContent="Copied";setTimeout(function(){$("copyLog").textContent="Copy results";},1500);},function(){window.prompt("Copy your results",t);});}catch(e){window.prompt("Copy your results",t);}
 });
 spinBtn.addEventListener("click",spin);
