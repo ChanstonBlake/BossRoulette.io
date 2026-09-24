@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +31,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 #rounds{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 20px}
 #rounds button{padding:8px 24px;background:var(--panel);color:var(--ink);border:2px solid var(--accent);font-weight:700;font-size:1.5rem}
 #rounds button.on{background:var(--accent);color:var(--bg)}
+#rounds button.next{box-shadow:0 0 22px var(--accent)}
 #rounds button:disabled{opacity:.5;cursor:default}
 .viewport{position:relative;overflow:hidden;background:var(--panel);border-radius:16px;height:200px;border:3px solid var(--accent);box-shadow:0 0 40px color-mix(in srgb,var(--accent) 22%,transparent)}
 .viewport::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg),transparent 22%,transparent 78%,var(--bg));pointer-events:none;z-index:1}
@@ -53,6 +55,8 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 #history{opacity:.85;font-size:1.4rem;padding-left:24px}
 #completeBtn{margin-top:22px;font-family:var(--script);font-size:2.4rem;font-weight:400;padding:8px 44px;background:transparent;color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 26px color-mix(in srgb,var(--accent) 45%,transparent)}
 #completeBtn:hover{background:var(--accent);color:var(--bg)}
+#rerollBtn{margin:16px auto 0;display:block;padding:6px 30px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:2px solid var(--accent);animation:soft 1.6s both}
+#rerollBtn:hover{background:var(--accent);color:var(--bg)}
 #copyLog{margin:12px auto 0;display:block;padding:4px 16px;background:#ffffff1f;color:var(--ink)}
 @keyframes soft{from{opacity:0;filter:blur(6px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
 #title,#sub{animation:soft 1.8s both}
@@ -102,6 +106,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3
 <button id="spin" class="big">Spin</button>
 <div id="result" aria-live="polite"></div>
 <div id="choices" hidden></div>
+<button id="rerollBtn" hidden>Use free reroll</button>
 <ol id="history" reversed aria-label="Spin history"></ol>
 <button id="completeBtn" hidden>Round complete.</button>
 </div>
@@ -254,14 +259,40 @@ return u;
 }
 function anyGift(){for(var i=0;i<rounds.length;i++)if(loadGift(i))return true;return false;}
 function anyLog(){for(var i=0;i<rounds.length;i++)if(loadRun(i).length)return true;return false;}
+/* first round without a claimed gift = the only round a team may enter next */
+function nextIncomplete(){for(var i=0;i<rounds.length;i++)if(!loadGift(i))return i;return rounds.length-1;}
+/* ---------- free reroll (won as a gift, usable once in the NEXT round) ---------- */
+function rerollKey(i){return key("wheelRerollUsed",i,team);}
+function rerollUsed(){try{return !!localStorage.getItem(rerollKey(ri));}catch(e){return false;}}
+function rerollAvail(){return !!(r&&team&&ri>0&&/re-?roll/i.test(loadGift(ri-1))&&!rerollUsed());}
+function canReroll(){return rerollAvail()&&!gift&&!spinning&&!rolling&&log.length>0;}
+function doReroll(){
+if(!canReroll())return;
+var e=log.pop();
+try{localStorage.setItem(rerollKey(ri),"1");}catch(x){}
+if(r.noRepeats!==false){
+var wi=used.wins.indexOf(e.win);if(wi>-1)used.wins.splice(wi,1);
+if(e.choice){var ci=used.choices.indexOf(e.choice);if(ci>-1)used.choices.splice(ci,1);}
+opts=r.options.slice(0,24).filter(function(o){return used.wins.indexOf(o)<0;});
+}
+saveRun();
+$("choices").innerHTML="";$("choices").hidden=true;pending=false;
+cur=0;renderHistory();draw();
+show("Free reroll used","Spin again");
+updateStatus();
+}
 function renderRounds(){
 var box=$("rounds");box.innerHTML="";
+var nx=nextIncomplete();
 rounds.forEach(function(o,i){
 var b=document.createElement("button"),n=(i===ri?log:loadRun(i)).length,g=i===ri?gift:loadGift(i);
 b.textContent=o.name+(g?" ✓":(n?" · "+n+"/"+(o.maxSpins||5):""));
 if(i===ri)b.className="on";
-b.disabled=spinning||pending;
-b.addEventListener("click",function(){chooseRound(i);});
+/* Only the next unfinished round is clickable, and only once every earlier round is done. */
+var allowed=(i===nx&&i!==ri&&!g&&(i===0||!!loadGift(i-1)));
+if(allowed)b.className+=" next";
+b.disabled=spinning||pending||!allowed;
+if(allowed)b.addEventListener("click",function(){chooseRound(i);});
 box.appendChild(b);
 });
 }
@@ -275,6 +306,8 @@ else if(!r)st.textContent="Signed by "+team;
 else if(gift)st.textContent="Signed by "+team+" · "+r.name+" complete";
 else if((log.length>=max()||!opts.length)&&!pending)st.textContent="Signed by "+team+" · all spins used";
 else st.textContent="Signed by "+team+" · spin "+Math.min(log.length+(pending?0:1),max())+" of "+max();
+if(team&&r&&!gift&&rerollAvail())st.textContent+=" · free reroll ready";
+$("rerollBtn").hidden=!canReroll();
 if(team)renderRounds();
 var c=$("completeBtn");c.hidden=!(r&&(gift||canComplete()));
 c.textContent=gift?"View your final scroll":"Round complete.";
@@ -383,7 +416,7 @@ $("completeBtn").addEventListener("click",function(){if(r&&(gift||canComplete())
 /* ---------- team / misc ---------- */
 function startTeam(){
 var v=$("team").value.trim();if(!v){$("team").focus();return;}
-team=v;landing();chooseRound(0);
+team=v;landing();chooseRound(nextIncomplete());
 }
 $("startBtn").addEventListener("click",startTeam);
 $("team").addEventListener("keydown",function(e){if(e.key==="Enter")startTeam();});
@@ -398,6 +431,7 @@ if(l.length||g)t+="\n\n"+o.name+":\n"+l.map(function(e,j){return (j+1)+". "+line
 try{navigator.clipboard.writeText(t).then(function(){$("copyLog").textContent="Copied";setTimeout(function(){$("copyLog").textContent="Copy results";},1500);},function(){window.prompt("Copy your results",t);});}catch(e){window.prompt("Copy your results",t);}
 });
 spinBtn.addEventListener("click",spin);
+$("rerollBtn").addEventListener("click",doReroll);
 window.addEventListener("resize",draw);
 landing();updateStatus();
 })();
